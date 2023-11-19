@@ -6,7 +6,6 @@ PatientDataSimulation/
 │   └── diagnosis_data.csv
 │
 ├── src/                     # Source code directory
-│   ├── __init__.py
 │   ├── main.py              # Main script for coordinating the entire process
 │   ├── data_loader.py       # Functions related to data loading
 │   ├── data_generator.py    # Functions related to data generation
