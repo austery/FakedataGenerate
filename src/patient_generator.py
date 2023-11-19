@@ -4,25 +4,10 @@ from faker import Faker
 
 # Generate demographic data with admission and discharge dates
 # patient_id: Unique patient identifier
-# first_name: Patient's first name
-# last_name: Patient's last name
-# fac_name: Facility name
-# adt_from_loc_name: Admit from location
-# dchg_to_loc_name: Discharge to location
-# Payer: Payer information
-# unit_desc: Unit description
-# room_desc: Room description
-# bed_desc: Bed description
-# admit_date: Admission date
-# discharge_date: Discharge date
-# Active_Stay_Ind: Active stay indicator as 0 or 1
-# Functional_Independence: Functional independence level
+
 def generate_new_patients(num_records):
     demographic_data = []
     for patient_id in range(1, num_records + 1):
-        # Generate a birth date for patients older than 50
-        birth_date = fake.date_of_birth(minimum_age=50)
-
         # Basic patient demographic information
         first_name = fake.first_name()  # Patient's first name
         last_name = fake.last_name()  # Patient's last name
@@ -35,14 +20,15 @@ def generate_new_patients(num_records):
         bed_desc = fake.random_number(digits=2)  # Bed description
 
         # Admission and discharge dates
-        admit_date = fake.date_between(start_date='-1y', end_date='today')  # Admission date
+        admit_date = fake.date_between(start_date='-90d', end_date='today')  # Admission date
         active_stay_ind = random.randint(0, 1)  # Randomly setting active stay indicator as 0 or 1
         discharge_date = None if active_stay_ind == 1 else fake.date_between(start_date=admit_date,
                                                                              end_date='today')  # Discharge date
 
         functional_independence = fake.random_element(
             elements=('Independent', 'Assistance Required', 'Dependent'))  # Level of functional independence
-
+        # Generate a birth date for patients older than 50
+        birth_date = fake.date_of_birth(minimum_age=50)
         record = {
             'patient_id': patient_id,  # Unique patient identifier
             'first_name': first_name,
@@ -62,3 +48,23 @@ def generate_new_patients(num_records):
         }
         demographic_data.append(record)
     return demographic_data
+
+
+# update the active patient to discharge
+def update_patient_status(demographic_data, discharge_percentage=10):
+    # 当前日期
+    current_date = datetime.now().date()
+
+    # 筛选出活跃患者
+    active_patients = [patient for patient in demographic_data if patient['Active_Stay_Ind'] == 1]
+
+    # 计算需要出院的患者数量
+    num_patients_to_discharge = int(len(active_patients) * discharge_percentage / 100)
+
+    # 随机选择一定比例的患者进行出院处理
+    patients_to_discharge = random.sample(active_patients, num_patients_to_discharge)
+
+    for patient in patients_to_discharge:
+        patient['discharge_date'] = current_date.strftime('%Y-%m-%d')
+        patient['Active_Stay_Ind'] = 0
+        admit_date = datetime.strptime(patient['admit_date'], '%Y-%m-%d').date()
