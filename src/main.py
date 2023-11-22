@@ -1,4 +1,7 @@
+import glob
 import logging
+import os
+
 from config import config
 from demographic_generator import generate_new_demographic, discharge_demographic
 from risk_score_generator import generate_risk_scores
@@ -7,7 +10,6 @@ from diagnosis_generator import generate_diagnoses
 from data_manager import load_data, save_data
 import pandas as pd
 import datetime
-
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -18,12 +20,33 @@ def create_file_path(base_name):
     return f"{config['data_directory']}/{base_name}_{current_date}.csv"
 
 
+def find_latest_file(directory, pattern):
+    """Find the latest file in the directory matching the given pattern."""
+    files = glob.glob(os.path.join(directory, pattern))
+    if not files:
+        return None
+    latest_file = max(files, key=os.path.getctime)
+    return latest_file
+
+
 def main():
     logging.info("Daily operations started.")
     try:
-        # Load existing data
-        demographic_data_file_path = create_file_path('demographic_data')
-        current_demographic_data = load_data(demographic_data_file_path)
+        data_directory = config['data_directory']
+        latest_file_pattern = 'demographic_data_*.csv'
+        latest_file_path = find_latest_file(data_directory, latest_file_pattern)
+
+        if latest_file_path:
+            # Load data from the latest file
+            current_demographic_data = pd.read_csv(latest_file_path)
+        else:
+            # Handle the case where no file is found (e.g., create initial data)
+            logging.info("No existing data file found. Generating initial data.")
+            # Generate initial data logic here
+            current_demographic_data = generate_new_demographic(1, 100)
+            save_data(current_demographic_data, create_file_path('demographic_data'))
+            risk_scores_data = generate_risk_scores(current_demographic_data)
+            save_data(risk_scores_data, create_file_path('risk_scores_data'))
 
         # Discharge some patients and generate new ones
         if not current_demographic_data.empty:
