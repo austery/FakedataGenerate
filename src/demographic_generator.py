@@ -1,13 +1,17 @@
 from datetime import datetime, timedelta
 from faker import Faker
+import random
+import pandas as pd
 
 
 # Generate demographic data with admission and discharge dates
 # patient_id: Unique patient identifier
 
-def generate_new_patients(num_records):
+def generate_new_demographic(starting_patient_id: int = 1, num_records: int = 20) -> pd.DataFrame:
+    fake = Faker()
+
     demographic_data = []
-    for patient_id in range(1, num_records + 1):
+    for patient_id in range(starting_patient_id, starting_patient_id + num_records):
         # Basic patient demographic information
         first_name = fake.first_name()  # Patient's first name
         last_name = fake.last_name()  # Patient's last name
@@ -27,8 +31,8 @@ def generate_new_patients(num_records):
 
         functional_independence = fake.random_element(
             elements=('Independent', 'Assistance Required', 'Dependent'))  # Level of functional independence
-        # Generate a birth date for patients older than 50
-        birth_date = fake.date_of_birth(minimum_age=50)
+        # Generate a birthdate for patients older than 50
+        birth_date = fake.date_of_birth(minimum_age=60)
         record = {
             'patient_id': patient_id,  # Unique patient identifier
             'first_name': first_name,
@@ -47,24 +51,27 @@ def generate_new_patients(num_records):
             'birth_date': birth_date.strftime('%Y-%m-%d')  # Birth date
         }
         demographic_data.append(record)
-    return demographic_data
+    return pd.DataFrame(demographic_data)
 
 
 # update the active patient to discharge
-def update_patient_status(demographic_data, discharge_percentage=10):
-    # 当前日期
+def discharge_demographic(demographic_data: pd.DataFrame, discharge_percentage: int = 10) -> pd.DataFrame:
+    # Current date
     current_date = datetime.now().date()
 
-    # 筛选出活跃患者
-    active_patients = [patient for patient in demographic_data if patient['Active_Stay_Ind'] == 1]
+    # Filter active patients
+    active_patients = demographic_data[demographic_data['Active_Stay_Ind'] == 1]
 
-    # 计算需要出院的患者数量
+    # Calculate the number of patients to discharge
     num_patients_to_discharge = int(len(active_patients) * discharge_percentage / 100)
 
-    # 随机选择一定比例的患者进行出院处理
-    patients_to_discharge = random.sample(active_patients, num_patients_to_discharge)
+    # Randomly select a certain percentage of patients for discharge
+    patients_to_discharge_indices = random.sample(list(active_patients.index),
+                                                  min(num_patients_to_discharge, len(active_patients)))
 
-    for patient in patients_to_discharge:
-        patient['discharge_date'] = current_date.strftime('%Y-%m-%d')
-        patient['Active_Stay_Ind'] = 0
-        admit_date = datetime.strptime(patient['admit_date'], '%Y-%m-%d').date()
+    # Update discharge date and active stay indicator
+    for index in patients_to_discharge_indices:
+        demographic_data.at[index, 'discharge_date'] = current_date.strftime('%Y-%m-%d')
+        demographic_data.at[index, 'Active_Stay_Ind'] = 0
+
+    return demographic_data

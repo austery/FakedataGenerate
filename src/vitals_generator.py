@@ -1,6 +1,8 @@
 import random
-from datetime import datetime, timedelta
+from datetime import datetime
+
 from faker import Faker
+
 
 # Generate vitals data records based on demographic data
 # generate 1 - 4 vitals records for each patient
@@ -17,6 +19,7 @@ from faker import Faker
 # Weight: Weight
 # Blood Glucose: Blood glucose level
 def generate_vitals(demographic_data):
+    fake = Faker()
     vitals_data = []
     for patient in demographic_data:
         num_vitals_records = random.randint(1, 4)

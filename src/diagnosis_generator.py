@@ -2,9 +2,11 @@ import random
 from datetime import datetime, timedelta
 from faker import Faker
 
+
 # Generate diagnosis data records based on demographic data
 # generate 1 - 5 diagnosis records for each patient
 def generate_diagnoses(demographic_data):
+    fake = Faker()
     diagnosis_data = []
     diagnosis_codes = ["A00", "A01", "B00", "B01", "C00", "C01"]  # 示例ICD-10代码
     severities = ["Low", "Medium", "High"]
