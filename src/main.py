@@ -31,6 +31,7 @@ def find_latest_file(directory, pattern):
 
 def main():
     logging.info("Daily operations started.")
+    initial_data_created = False  # Flag to track if initial data was created
     try:
         data_directory = config['data_directory']
         latest_file_pattern = 'demographic_data_*.csv'
@@ -42,14 +43,16 @@ def main():
         else:
             # Handle the case where no file is found (e.g., create initial data)
             logging.info("No existing data file found. Generating initial data.")
-            # Generate initial data logic here
             current_demographic_data = generate_new_demographic(1, 100)
-            save_data(current_demographic_data, create_file_path('demographic_data'))
             risk_scores_data = generate_risk_scores(current_demographic_data)
+
+            save_data(current_demographic_data, create_file_path('demographic_data'))
             save_data(risk_scores_data, create_file_path('risk_scores_data'))
 
-        # Discharge some patients and generate new ones
-        if not current_demographic_data.empty:
+            initial_data_created = True
+
+        # Perform daily operations only if initial data wasn't created just now
+        if not initial_data_created and not current_demographic_data.empty:
             max_patient_id = current_demographic_data['patient_id'].max()
             update_demographic_data = discharge_demographic(current_demographic_data)
             new_demographic_data = generate_new_demographic(max_patient_id + 1, config['new_patients_count'])
@@ -66,10 +69,12 @@ def main():
             # save_data(vitals_data, create_file_path('vitals_data'))
             # save_data(diagnoses_data, create_file_path('diagnoses_data'))
 
-        else:
-            logging.warning("DataFrame is empty or patient_id column does not exist.")
+        elif initial_data_created:
+            logging.info("Initial data created. Skipping discharge and new patient generation for today.")
+
     except Exception as e:
         logging.error(f"An error occurred: {e}")
+
     logging.info("Daily operations completed.")
 
 
