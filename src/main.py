@@ -39,7 +39,7 @@ def main():
 
         if latest_file_path:
             # Load data from the latest file
-            current_demographic_data = pd.read_csv(latest_file_path)
+            current_demographic_data = load_data(latest_file_path)
         else:
             # Handle the case where no file is found (e.g., create initial data)
             logging.info("No existing data file found. Generating initial data.")
